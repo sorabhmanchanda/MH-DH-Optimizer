@@ -1,0 +1,8 @@
+# https://docs.railway.com/reference/config-as-code
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/docs"
+healthcheckTimeout = 120

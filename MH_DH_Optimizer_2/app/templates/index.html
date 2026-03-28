@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MH-DH Route Optimizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #1a56db;
+      --primary-hover: #1447b8;
+      --primary-soft: rgba(26, 86, 219, 0.08);
+      --page-bg: #f1f4f9;
+      --card-bg: #ffffff;
+      --text: #1a1d21;
+      --text-muted: #5c6370;
+      --border: #e2e6ed;
+      --border-focus: #1a56db;
+      --success-bg: #ecfdf3;
+      --success-text: #046c4e;
+      --success-border: #6ce9a6;
+      --error-bg: #fef2f2;
+      --error-text: #b42318;
+      --error-border: #fecdca;
+      --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+      --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.07), 0 1px 3px rgba(16, 24, 40, 0.04);
+      --radius-card: 12px;
+      --radius-input: 6px;
+      --section-gap: 2rem;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Inter", "Segoe UI", Roboto, system-ui, sans-serif;
+      background: var(--page-bg);
+      color: var(--text);
+      margin: 0;
+      line-height: 1.55;
+      min-height: 100vh;
+      font-size: 15px;
+    }
+
+    .top-bar {
+      background: linear-gradient(135deg, #1a56db 0%, #1447b8 100%);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      padding: 1rem 2rem;
+      min-height: 64px;
+      box-shadow: var(--shadow-md);
+    }
+    .brand-main {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .brand-main .accent { color: #fcd34d; }
+    .brand-sub {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      opacity: 0.92;
+      margin-top: 0.2rem;
+    }
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--section-gap) 1.5rem 3rem;
+    }
+
+    .page-intro {
+      margin-bottom: var(--section-gap);
+    }
+    .page-intro h1 {
+      margin: 0 0 0.35rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .page-intro p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+      max-width: 42rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-md);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      padding: 1.5rem 1.75rem;
+      margin-bottom: var(--section-gap);
+    }
+    .card-title {
+      margin: 0 0 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .file-field label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .file-input-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-input);
+      padding: 0.65rem 0.85rem;
+      background: #fafbfc;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .file-input-wrap:focus-within {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+    .file-input-wrap input[type="file"] {
+      width: 100%;
+      font-size: 0.875rem;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    .hint {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .config-deck {
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-gap);
+      margin-bottom: var(--section-gap);
+    }
+
+    .field {
+      margin-bottom: 1.1rem;
+    }
+    .field:last-child { margin-bottom: 0; }
+    .field > label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+    .input-suffix-wrap {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-input);
+      background: #fff;
+      overflow: hidden;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-suffix-wrap:focus-within {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+    .input-suffix-wrap input[type="number"] {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      padding: 0.55rem 0.75rem;
+      font: inherit;
+      font-size: 0.9375rem;
+      color: var(--text);
+      background: transparent;
+    }
+    .input-suffix-wrap input:focus {
+      outline: none;
+    }
+    .input-suffix {
+      flex-shrink: 0;
+      padding: 0 0.75rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: #f8f9fb;
+      border-left: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .input-suffix:empty {
+      display: none;
+    }
+    .input-suffix-wrap .input-suffix:empty + input,
+    .input-suffix-wrap input:only-child {
+      border-radius: var(--radius-input);
+    }
+
+    .grid-costs {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.85rem 1rem;
+    }
+    @media (min-width: 480px) {
+      .grid-costs {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .card-actions {
+      margin-bottom: var(--section-gap);
+    }
+    .actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem 1rem;
+    }
+    .btn {
+      font: inherit;
+      cursor: pointer;
+      border-radius: var(--radius-input);
+      font-weight: 600;
+      font-size: 0.8125rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+    }
+    .btn-run {
+      padding: 0.9rem 2rem;
+      font-size: 0.9375rem;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(26, 86, 219, 0.35);
+    }
+    .btn-run:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+    .btn-run:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .btn-ghost {
+      padding: 0.65rem 1.25rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+    }
+    .btn-ghost:hover {
+      background: #f8f9fb;
+      border-color: #cfd6e1;
+      color: var(--text);
+    }
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.65rem 1.25rem;
+      border: 2px solid var(--primary);
+      background: transparent;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .btn-outline:hover {
+      background: var(--primary-soft);
+    }
+    .btn-outline[hidden] {
+      display: none;
+    }
+
+    .action-feedback {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      margin-top: 1.25rem;
+      padding: 0.85rem 1.1rem;
+      border-radius: var(--radius-input);
+      font-size: 0.875rem;
+      font-weight: 500;
+      line-height: 1.45;
+    }
+    .action-feedback[hidden] {
+      display: none;
+    }
+    .action-feedback--ok {
+      background: var(--success-bg);
+      color: var(--success-text);
+      border: 1px solid var(--success-border);
+    }
+    .action-feedback--err {
+      background: var(--error-bg);
+      color: var(--error-text);
+      border: 1px solid var(--error-border);
+    }
+    .action-feedback-icon {
+      flex-shrink: 0;
+      width: 1.35rem;
+      height: 1.35rem;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .action-feedback--ok .action-feedback-icon {
+      background: #6ce9a6;
+      color: #046c4e;
+    }
+    .action-feedback--err .action-feedback-icon {
+      background: #fecdca;
+      color: #b42318;
+    }
+
+    pre.logs {
+      margin: 0;
+      max-height: 220px;
+      overflow: auto;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      background: #f8f9fb;
+      padding: 1rem 1.15rem;
+      border-radius: var(--radius-input);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    }
+
+    .results-stack {
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-gap);
+    }
+    .table-wrap {
+      overflow: auto;
+      max-height: 440px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-input);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+    th, td {
+      padding: 0.55rem 0.7rem;
+      text-align: left;
+      border-bottom: 1px solid #eef1f5;
+      white-space: nowrap;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: #f0f2f6;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <header class="top-bar">
+    <div>
+      <div class="brand-main"><span class="accent">MH-DH</span> Optimizer</div>
+      <div class="brand-sub">Route optimisation · Local control center</div>
+    </div>
+  </header>
+
+  <div class="shell">
+    <div class="page-intro">
+      <h1>Route optimisation</h1>
+      <p>Upload your workbook, adjust constraints and fleet costs, then run. Results appear below; download the full Excel report when ready.</p>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Input workbook</h2>
+      <div class="file-field">
+        <label for="file">Spreadsheet (.xlsx)</label>
+        <div class="file-input-wrap">
+          <input type="file" id="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+        </div>
+      </div>
+      <p class="hint">Required sheets: <strong>Location_file</strong>, <strong>Distance_Matrix</strong>, <strong>Time_Matrix</strong>. Server should listen on <code>127.0.0.1</code> for local use only.</p>
+    </div>
+
+    <div class="config-deck">
+      <div class="card">
+        <h2 class="card-title">Logistics constraints</h2>
+        <div id="grid-logistics"></div>
+      </div>
+      <div class="card card-fleet">
+        <h2 class="card-title">Fleet cost matrix</h2>
+        <p class="hint" style="margin-top:-0.5rem;margin-bottom:1rem;">Cost per km by vehicle length (feet).</p>
+        <div class="grid-costs" id="grid-costs"></div>
+      </div>
+    </div>
+
+    <div class="card card-actions">
+      <div class="actions-row">
+        <button type="button" class="btn btn-ghost" id="reset">Reset</button>
+        <button type="button" class="btn btn-run" id="run">Run route optimisation</button>
+        <a class="btn btn-outline" id="download" href="#" hidden>Download report</a>
+      </div>
+      <div id="action-feedback" class="action-feedback" hidden role="status" aria-live="polite">
+        <span class="action-feedback-icon" aria-hidden="true"></span>
+        <span class="action-feedback-text"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Processing log</h2>
+      <pre class="logs" id="logs">No run yet.</pre>
+    </div>
+
+    <div class="results-stack">
+      <div class="card">
+        <h2 class="card-title">Final assignment</h2>
+        <div class="table-wrap" id="wrap-final"></div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Expanded schedule</h2>
+        <div class="table-wrap" id="wrap-exp"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const defaults = {
+      max_hops: 4,
+      travel_time_threshold: 100000,
+      service_time_minutes: 120,
+      cost_40ft: 70,
+      cost_32ft: 50,
+      cost_24ft: 35,
+      cost_22ft: 35,
+      cost_20ft: 30,
+      cost_17ft: 30,
+      cost_14ft: 25,
+      cost_10ft: 25,
+      cost_8ft: 20,
+      cost_7ft: 20,
+    };
+
+    const formKeys = [
+      "max_hops",
+      "travel_time_threshold",
+      "service_time_minutes",
+      "cost_40ft",
+      "cost_32ft",
+      "cost_24ft",
+      "cost_22ft",
+      "cost_20ft",
+      "cost_17ft",
+      "cost_14ft",
+      "cost_10ft",
+      "cost_8ft",
+      "cost_7ft",
+    ];
+
+    const logisticsMeta = [
+      { key: "max_hops", label: "Max hops", suffix: "hops" },
+      { key: "service_time_minutes", label: "Hop time", suffix: "mins" },
+      { key: "travel_time_threshold", label: "Travel time threshold", suffix: "mins" },
+    ];
+    const costKeys = [
+      "cost_40ft", "cost_32ft", "cost_24ft", "cost_22ft", "cost_20ft", "cost_17ft",
+      "cost_14ft", "cost_10ft", "cost_8ft", "cost_7ft",
+    ];
+    const costLabels = {
+      cost_40ft: "40 ft",
+      cost_32ft: "32 ft",
+      cost_24ft: "24 ft",
+      cost_22ft: "22 ft",
+      cost_20ft: "20 ft",
+      cost_17ft: "17 ft",
+      cost_14ft: "14 ft",
+      cost_10ft: "10 ft",
+      cost_8ft: "8 ft",
+      cost_7ft: "7 ft",
+    };
+
+    function addField(container, meta) {
+      const wrap = document.createElement("div");
+      wrap.className = "field";
+      const lab = document.createElement("label");
+      lab.textContent = meta.label;
+      lab.htmlFor = "cfg-" + meta.key;
+      const row = document.createElement("div");
+      row.className = "input-suffix-wrap";
+      const inp = document.createElement("input");
+      inp.type = "number";
+      inp.id = "cfg-" + meta.key;
+      inp.name = meta.key;
+      inp.value = defaults[meta.key];
+      inp.step =
+        meta.key.includes("cost") || meta.key === "travel_time_threshold" ? "any" : "1";
+      const suf = document.createElement("span");
+      suf.className = "input-suffix";
+      suf.textContent = meta.suffix || "";
+      row.appendChild(inp);
+      row.appendChild(suf);
+      wrap.appendChild(lab);
+      wrap.appendChild(row);
+      container.appendChild(wrap);
+    }
+
+    function buildFields() {
+      document.getElementById("grid-logistics").innerHTML = "";
+      document.getElementById("grid-costs").innerHTML = "";
+      logisticsMeta.forEach((m) => addField(document.getElementById("grid-logistics"), m));
+      costKeys.forEach((key) => {
+        addField(document.getElementById("grid-costs"), {
+          key,
+          label: costLabels[key] || key,
+          suffix: "/ km",
+        });
+      });
+    }
+
+    buildFields();
+
+    function showActionFeedback(text, ok) {
+      const el = document.getElementById("action-feedback");
+      const icon = el.querySelector(".action-feedback-icon");
+      const txt = el.querySelector(".action-feedback-text");
+      if (!text) {
+        el.hidden = true;
+        return;
+      }
+      el.hidden = false;
+      el.className = "action-feedback " + (ok ? "action-feedback--ok" : "action-feedback--err");
+      icon.textContent = ok ? "✓" : "!";
+      txt.textContent = text;
+    }
+
+    document.getElementById("reset").addEventListener("click", () => {
+      buildFields();
+      showActionFeedback("");
+    });
+
+    function collectConfig() {
+      const c = {};
+      for (const key of formKeys) {
+        const el = document.getElementById("cfg-" + key);
+        const v = el.value === "" ? defaults[key] : Number(el.value);
+        c[key] = v;
+      }
+      return c;
+    }
+
+    const FINAL_ASSIGNMENT_UI_OMIT = new Set([
+      "arrival_times",
+      "departure_times",
+      "updated_depot_departure",
+    ]);
+
+    const DAY_MINUTES = 24 * 60;
+
+    function minutesToHHMM(raw) {
+      if (raw === null || raw === undefined || raw === "") return "";
+      const n = typeof raw === "number" ? raw : Number(String(raw).trim().replace(/,/g, ""));
+      if (!Number.isFinite(n)) return String(raw);
+      const total = Math.round(n);
+      const mod = ((total % DAY_MINUTES) + DAY_MINUTES) % DAY_MINUTES;
+      const h = Math.floor(mod / 60);
+      const m = mod % 60;
+      return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+    }
+
+    function formatCellDisplay(columnName, value, profile) {
+      const c = String(columnName)
+        .toLowerCase()
+        .replace(/\s+/g, "_");
+      if (profile === "expanded") {
+        if (c === "arrival_time" || c === "departure_time") {
+          return minutesToHHMM(value);
+        }
+        if (c === "total_demand") {
+          const n = Number(value);
+          if (Number.isFinite(n)) return String(Math.round(n));
+        }
+      }
+      if (profile === "final") {
+        if (c === "dist" || c === "monthly_cost" || c === "total_demand") {
+          const n = Number(value);
+          if (Number.isFinite(n)) return String(Math.round(n));
+        }
+      }
+      if (value === null || value === undefined) return "";
+      return String(value);
+    }
+
+    function tableFromRecords(records, container, omitColumns, displayProfile) {
+      container.innerHTML = "";
+      container.style.color = "";
+      if (!records || !records.length) {
+        container.textContent = "(empty)";
+        container.style.color = "var(--text-muted)";
+        return;
+      }
+      const lowerOmit = new Set();
+      (omitColumns || new Set()).forEach((k) => lowerOmit.add(String(k).toLowerCase()));
+      const cols = Object.keys(records[0]).filter((c) => !lowerOmit.has(String(c).toLowerCase()));
+      const t = document.createElement("table");
+      const thead = document.createElement("thead");
+      const trh = document.createElement("tr");
+      cols.forEach((cname) => {
+        const th = document.createElement("th");
+        th.textContent = cname;
+        trh.appendChild(th);
+      });
+      thead.appendChild(trh);
+      t.appendChild(thead);
+      const tb = document.createElement("tbody");
+      records.forEach((row) => {
+        const tr = document.createElement("tr");
+        cols.forEach((cname) => {
+          const td = document.createElement("td");
+          const v = row[cname];
+          td.textContent = formatCellDisplay(cname, v, displayProfile || null);
+          tr.appendChild(td);
+        });
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb);
+      container.appendChild(t);
+    }
+
+    document.getElementById("run").addEventListener("click", async () => {
+      const fileEl = document.getElementById("file");
+      if (!fileEl.files || !fileEl.files[0]) {
+        showActionFeedback("Choose an .xlsx file before running.", false);
+        return;
+      }
+      const btn = document.getElementById("run");
+      const dl = document.getElementById("download");
+      dl.hidden = true;
+      showActionFeedback("");
+      btn.disabled = true;
+      document.getElementById("logs").textContent = "Running…";
+
+      const fd = new FormData();
+      fd.append("file", fileEl.files[0]);
+      fd.append("config", JSON.stringify(collectConfig()));
+
+      try {
+        const res = await fetch("/api/optimize", { method: "POST", body: fd });
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data.detail;
+          const msg = typeof detail === "string" ? detail : JSON.stringify(detail);
+          throw new Error(msg || res.statusText);
+        }
+        document.getElementById("logs").textContent = (data.logs || []).join("\n");
+        tableFromRecords(
+          data.final_assignment,
+          document.getElementById("wrap-final"),
+          FINAL_ASSIGNMENT_UI_OMIT,
+          "final"
+        );
+        tableFromRecords(
+          data.expanded_schedule,
+          document.getElementById("wrap-exp"),
+          null,
+          "expanded"
+        );
+        if (data.success && data.session_id) {
+          dl.href = "/api/download/" + data.session_id;
+          dl.hidden = false;
+          showActionFeedback(
+            "Optimisation finished successfully. Download the 7-sheet Excel report or review the tables below.",
+            true
+          );
+        } else {
+          showActionFeedback(
+            data.error_message || "Optimisation did not produce assignments.",
+            false
+          );
+        }
+      } catch (e) {
+        showActionFeedback(e.message || String(e), false);
+        document.getElementById("logs").textContent = "";
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
