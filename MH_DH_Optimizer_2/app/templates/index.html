@@ -367,7 +367,7 @@
   <header class="top-bar">
     <div>
       <div class="brand-main"><span class="accent">MH-DH</span> Optimizer</div>
-      <div class="brand-sub">Route optimisation · Local control center</div>
+      <div class="brand-sub">Route optimisation</div>
     </div>
   </header>
 
@@ -385,7 +385,7 @@
           <input type="file" id="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
         </div>
       </div>
-      <p class="hint">Required sheets: <strong>Location_file</strong>, <strong>Distance_Matrix</strong>, <strong>Time_Matrix</strong>. Server should listen on <code>127.0.0.1</code> for local use only.</p>
+      <p class="hint">Required sheets: <strong>Location_file</strong>, <strong>Distance_Matrix</strong>, <strong>Time_Matrix</strong>.</p>
     </div>
 
     <div class="config-deck">
@@ -672,10 +672,7 @@
         if (data.success && data.session_id) {
           dl.href = "/api/download/" + data.session_id;
           dl.hidden = false;
-          showActionFeedback(
-            "Optimisation finished successfully. Download the 7-sheet Excel report or review the tables below.",
-            true
-          );
+          showActionFeedback("Optimisation finished successfully.", true);
         } else {
           showActionFeedback(
             data.error_message || "Optimisation did not produce assignments.",
