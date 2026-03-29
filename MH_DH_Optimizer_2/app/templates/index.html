@@ -361,6 +361,28 @@
       letter-spacing: 0.05em;
       z-index: 1;
     }
+
+    /* Expanded schedule: group rows by route */
+    #wrap-exp tbody tr.sch-route--0 { background: rgba(26, 86, 219, 0.07); }
+    #wrap-exp tbody tr.sch-route--1 { background: rgba(5, 122, 85, 0.07); }
+    #wrap-exp tbody tr.sch-route--2 { background: rgba(180, 83, 9, 0.08); }
+    #wrap-exp tbody tr.sch-route--3 { background: rgba(109, 40, 217, 0.07); }
+    #wrap-exp tbody tr.sch-route--4 { background: rgba(194, 65, 12, 0.07); }
+    #wrap-exp tbody tr.sch-route--5 { background: rgba(8, 145, 178, 0.08); }
+    #wrap-exp tbody tr.sch-route-start td {
+      border-top: 2px solid var(--primary);
+      box-shadow: inset 0 2px 0 rgba(26, 86, 219, 0.12);
+    }
+    #wrap-exp tbody tr:first-child.sch-route-start td {
+      border-top: none;
+      box-shadow: none;
+    }
+    #wrap-exp td.sch-route-cell {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--primary);
+      letter-spacing: -0.02em;
+    }
   </style>
 </head>
 <body>
@@ -395,7 +417,7 @@
       </div>
       <div class="card card-fleet">
         <h2 class="card-title">Fleet cost matrix</h2>
-        <p class="hint" style="margin-top:-0.5rem;margin-bottom:1rem;">Cost per km by vehicle length (feet).</p>
+        <p class="hint" style="margin-top:-0.5rem;margin-bottom:1rem;">Cost (Rs/Km) by vehicle length (feet).</p>
         <div class="grid-costs" id="grid-costs"></div>
       </div>
     </div>
@@ -472,7 +494,7 @@
       "cost_14ft", "cost_10ft", "cost_8ft", "cost_7ft",
     ];
     const costLabels = {
-      cost_40ft: "40 ft",
+      cost_40ft: "50 ft",
       cost_32ft: "32 ft",
       cost_24ft: "24 ft",
       cost_22ft: "22 ft",
@@ -517,7 +539,7 @@
         addField(document.getElementById("grid-costs"), {
           key,
           label: costLabels[key] || key,
-          suffix: "/ km",
+          suffix: "Rs/Km",
         });
       });
     }
@@ -595,7 +617,48 @@
       return String(value);
     }
 
-    function tableFromRecords(records, container, omitColumns, displayProfile) {
+    const EXPANDED_COL_ORDER = [
+      "Route_ID",
+      "Location",
+      "Arrival_Time",
+      "Departure_Time",
+      "Freq",
+      "Vehicle_Length",
+      "Total_Demand",
+      "Route_Sequence",
+    ];
+
+    function normalizeColKey(name) {
+      return String(name)
+        .toLowerCase()
+        .replace(/\s+/g, "_");
+    }
+
+    function findRouteIdColumn(sampleRow) {
+      const keys = Object.keys(sampleRow);
+      return keys.find((k) => normalizeColKey(k) === "route_id") || null;
+    }
+
+    function orderColumnsForExpanded(cols) {
+      const seen = new Set();
+      const out = [];
+      for (const want of EXPANDED_COL_ORDER) {
+        const hit = cols.find((c) => c === want);
+        if (hit) {
+          out.push(hit);
+          seen.add(hit);
+        }
+      }
+      for (const c of cols) {
+        if (!seen.has(c)) out.push(c);
+      }
+      return out;
+    }
+
+    function tableFromRecords(records, container, omitColumns, displayProfile, tableOptions) {
+      tableOptions = tableOptions || {};
+      const routeBands = Boolean(tableOptions.routeBands);
+
       container.innerHTML = "";
       container.style.color = "";
       if (!records || !records.length) {
@@ -605,24 +668,53 @@
       }
       const lowerOmit = new Set();
       (omitColumns || new Set()).forEach((k) => lowerOmit.add(String(k).toLowerCase()));
-      const cols = Object.keys(records[0]).filter((c) => !lowerOmit.has(String(c).toLowerCase()));
+      let cols = Object.keys(records[0]).filter((c) => !lowerOmit.has(String(c).toLowerCase()));
+
+      let routeCol = null;
+      if (routeBands && displayProfile === "expanded") {
+        routeCol = findRouteIdColumn(records[0]);
+        if (routeCol) cols = orderColumnsForExpanded(cols);
+      }
+
       const t = document.createElement("table");
       const thead = document.createElement("thead");
       const trh = document.createElement("tr");
       cols.forEach((cname) => {
         const th = document.createElement("th");
-        th.textContent = cname;
+        if (routeCol && cname === routeCol) th.textContent = "Route";
+        else if (routeBands) th.textContent = cname.replace(/_/g, " ");
+        else th.textContent = cname;
         trh.appendChild(th);
       });
       thead.appendChild(trh);
       t.appendChild(thead);
       const tb = document.createElement("tbody");
+
+      let prevRoute = null;
       records.forEach((row) => {
         const tr = document.createElement("tr");
+        let routeNum = null;
+        if (routeCol) {
+          routeNum = Number(row[routeCol]);
+          if (Number.isFinite(routeNum)) {
+            tr.classList.add("sch-route--" + ((routeNum - 1) % 6));
+            if (prevRoute !== null && routeNum !== prevRoute) {
+              tr.classList.add("sch-route-start");
+            }
+            prevRoute = routeNum;
+          }
+        }
+
         cols.forEach((cname) => {
           const td = document.createElement("td");
           const v = row[cname];
-          td.textContent = formatCellDisplay(cname, v, displayProfile || null);
+          if (routeCol && cname === routeCol) {
+            td.classList.add("sch-route-cell");
+            const n = Number(v);
+            td.textContent = Number.isFinite(n) ? "Route " + n : formatCellDisplay(cname, v, displayProfile || null);
+          } else {
+            td.textContent = formatCellDisplay(cname, v, displayProfile || null);
+          }
           tr.appendChild(td);
         });
         tb.appendChild(tr);
@@ -667,7 +759,8 @@
           data.expanded_schedule,
           document.getElementById("wrap-exp"),
           null,
-          "expanded"
+          "expanded",
+          { routeBands: true }
         );
         if (data.success && data.session_id) {
           dl.href = "/api/download/" + data.session_id;
